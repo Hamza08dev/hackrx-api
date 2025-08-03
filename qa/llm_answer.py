@@ -49,11 +49,14 @@ class LLMAnswerGenerator:
         self.site_name = os.getenv("OPENROUTER_SITE_NAME", "Hybrid RAG System")
         
         # Generation settings for speed optimization
-        self.max_context_length = 1500  # Reduced for speed
-        self.max_output_tokens = 300   # Shorter responses for speed
-        self.default_temperature = 0.1  # More deterministic
-        self.max_retries = 1  # Single retry for speed
-        self.retry_delay = 1.0  # Shorter retry delay
+        from config import Config
+        llm_config = Config.LLM_ANSWER
+        
+        self.max_context_length = llm_config["max_context_length"]
+        self.max_output_tokens = llm_config["max_output_tokens"]
+        self.default_temperature = llm_config["temperature"]
+        self.max_retries = llm_config["max_retries"]
+        self.retry_delay = llm_config["retry_delay"]
         
         logger.info(f"✅ LLMAnswerGenerator initialized with OpenRouter ({model_name})")
     
@@ -95,26 +98,26 @@ Content: {text[:400]}{'...' if len(text) > 400 else ''}
     
     def create_system_prompt(self) -> str:
         """Create system prompt for the LLM."""
-        return """You are a helpful AI assistant that answers questions based on provided context from documents. 
+        return """You are a helpful AI assistant that provides accurate, concise answers based on provided context from documents. 
 
 Instructions:
 - Use ONLY the information provided in the context
-- Be accurate and concise
-- If the context doesn't contain relevant information, say so clearly
-- Cite specific sources when possible
-- Keep answers focused and informative
-- Avoid speculation beyond the provided context"""
+- Be extremely concise and to-the-point (1-2 sentences maximum)
+- If the context doesn't contain relevant information, say "Information not found in the document"
+- Focus on the most relevant facts only
+- Avoid unnecessary explanations or background information
+- Give direct, factual answers"""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
-        return f"""Based on the following context from documents, please answer this question:
+        return f"""Answer this question concisely using only the provided context:
 
 Question: {question}
 
 Context:
 {context}
 
-Answer:"""
+Answer (be brief and direct):"""
     
     def generate_answer(self, question: str, search_results: List[Dict[str, Any]]) -> str:
         """Generate answer using OpenRouter API."""

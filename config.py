@@ -47,6 +47,21 @@ class Config:
         "model_name": os.getenv("ENTITY_MODEL", "gemini-1.5-flash"),
     }
     
+    # LLM ANSWER GENERATION SETTINGS
+    LLM_ANSWER = {
+        # Output settings
+        "max_output_tokens": int(os.getenv("LLM_MAX_TOKENS", "200")),  # Reduced for concise answers
+        "max_context_length": int(os.getenv("LLM_CONTEXT_LENGTH", "1500")),
+        "temperature": float(os.getenv("LLM_TEMPERATURE", "0.1")),
+        
+        # Retry settings
+        "max_retries": int(os.getenv("LLM_MAX_RETRIES", "1")),
+        "retry_delay": float(os.getenv("LLM_RETRY_DELAY", "1.0")),
+        
+        # Model settings
+        "model_name": os.getenv("LLM_MODEL", "deepseek/deepseek-r1:free"),
+    }
+    
     # PERFORMANCE PROFILES
     PERFORMANCE_PROFILES = {
         "fast": {
