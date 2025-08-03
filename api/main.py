@@ -56,7 +56,6 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-
 # Security
 security = HTTPBearer()
 
@@ -301,7 +300,6 @@ async def root():
 async def options_hackrx_run():
     """Handle OPTIONS requests for CORS preflight."""
     return {"message": "OK"}
-
 if __name__ == "__main__":
     # Run with uvicorn
     port = int(os.getenv("PORT", 8000))
