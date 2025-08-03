@@ -15,11 +15,13 @@ import tempfile
 from typing import List, Dict, Any
 from datetime import datetime
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, BackgroundTasks
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import uvicorn
+import hashlib
+import json
 
 # Load environment
 load_dotenv()
@@ -69,6 +71,40 @@ class HackRxResponse(BaseModel):
 
 # Global components (initialize once)
 components = None
+
+# Add caching
+document_cache = {}
+
+def get_document_hash(document_url: str) -> str:
+    """Generate hash for document URL."""
+    return hashlib.md5(document_url.encode()).hexdigest()
+
+def get_cached_document(document_url: str) -> Dict[str, Any]:
+    """Get cached document if available."""
+    doc_hash = get_document_hash(document_url)
+    if doc_hash in document_cache:
+        cached_data = document_cache[doc_hash]
+        # Check if cache is not too old (1 hour)
+        if time.time() - cached_data.get('timestamp', 0) < 3600:
+            logger.info(f"✅ Using cached document: {doc_hash[:8]}...")
+            return cached_data.get('data', {})
+    return None
+
+def cache_document(document_url: str, data: Dict[str, Any]):
+    """Cache document data."""
+    doc_hash = get_document_hash(document_url)
+    document_cache[doc_hash] = {
+        'data': data,
+        'timestamp': time.time()
+    }
+    logger.info(f"💾 Cached document: {doc_hash[:8]}...")
+    
+    # Keep cache size manageable (max 10 documents)
+    if len(document_cache) > 10:
+        oldest_key = min(document_cache.keys(), 
+                        key=lambda k: document_cache[k]['timestamp'])
+        del document_cache[oldest_key]
+        logger.info(f"🗑️ Removed oldest cache entry: {oldest_key[:8]}...")
 
 def get_components():
     """Get or initialize RAG components."""
@@ -136,6 +172,12 @@ def download_document(url: str) -> str:
 def process_document(components: Dict, document_url: str) -> str:
     """Process document and return document ID."""
     try:
+        # Check cache first
+        cached_data = get_cached_document(document_url)
+        if cached_data:
+            logger.info("✅ Using cached document data")
+            return cached_data.get('document_id')
+        
         # Download document with timeout
         logger.info("📥 Downloading document...")
         temp_path = download_document(document_url)
@@ -167,6 +209,12 @@ def process_document(components: Dict, document_url: str) -> str:
         
         if not success:
             raise ValueError("Failed to store document")
+        
+        # Cache the result
+        cache_document(document_url, {
+            'document_id': doc_id,
+            'text_length': len(text)
+        })
         
         # Cleanup temp file
         if os.path.exists(temp_path):
