@@ -39,10 +39,10 @@ class EntityExtractor:
             "WORKS_AT", "USES", "HAS_SKILL", "DEVELOPS"
         ]
         
-        # INCREASED Rate limiting to save quota
-        self.max_retries = 2  # Reduced retries
-        self.retry_delay = 2.0  # Longer delays
-        self.batch_delay = 3.0  # Much longer batch delays
+        # OPTIMIZED Rate limiting for speed
+        self.max_retries = 1  # Single retry for speed
+        self.retry_delay = 0.5  # Reduced delays
+        self.batch_delay = 0.5  # Reduced batch delays
         self.calls_per_document = 1  # LIMIT: Only 1 API call per document
         
         logger.info(f"✅ EntityExtractor initialized with {model_name}")
