@@ -1,163 +1,166 @@
 #!/usr/bin/env python3
 """
-Performance Test Script
-- Measures chunking and embedding performance
-- Compares optimized vs non-optimized settings
-- Provides detailed timing breakdowns
+Performance Test for HackRx API
+- Measures response times
+- Tests with real document and questions
+- Provides detailed timing breakdown
 """
 
+import requests
 import time
-import logging
-from processing.embedder import TextEmbedder
-from processing.entity_extractor import EntityExtractor
-from ingestion.document_loader import extract_text_from_file
-import os
+import json
+from datetime import datetime
 
-# Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-logger = logging.getLogger(__name__)
+# API Configuration
+API_URL = "https://web-production-84e69.up.railway.app/api/v1/hackrx/run"
+API_KEY = "hackrx-api-key-123"  # Replace with your actual API key
 
-def test_chunking_performance(text: str, embedder: TextEmbedder) -> dict:
-    """Test chunking performance and return metrics."""
-    logger.info("🧪 Testing chunking performance...")
+# Test data
+TEST_DOCUMENT = "https://hackrx.blob.core.windows.net/assets/policy.pdf?sv=2023-01-03&st=2025-07-04T09%3A11%3A24Z&se=2027-07-05T09%3A11%3A00Z&sr=b&sp=r&sig=N4a9OU0w0QXO6AOIBiu4bpl7AXvEZogeT%2FjUHNO7HzQ%3D"
+
+TEST_QUESTIONS = [
+    "What is the grace period for premium payment under the National Parivar Mediclaim Plus Policy?",
+    "What is the waiting period for pre-existing diseases (PED) to be covered?",
+    "Does this policy cover maternity expenses, and what are the conditions?"
+]
+
+def test_api_performance():
+    """Test API performance with timing measurements."""
     
-    start_time = time.time()
-    chunks = embedder.chunk_text(text)
-    chunking_time = time.time() - start_time
-    
-    return {
-        "chunking_time": chunking_time,
-        "num_chunks": len(chunks),
-        "avg_chunk_size": sum(len(chunk["text"]) for chunk in chunks) / len(chunks) if chunks else 0,
-        "text_length": len(text)
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
-
-def test_embedding_performance(chunks: list, embedder: TextEmbedder) -> dict:
-    """Test embedding performance and return metrics."""
-    logger.info("🧪 Testing embedding performance...")
     
-    start_time = time.time()
-    embedded_chunks = embedder.embed_chunks_batch(chunks)
-    embedding_time = time.time() - start_time
-    
-    return {
-        "embedding_time": embedding_time,
-        "num_embedded": len(embedded_chunks),
-        "avg_time_per_chunk": embedding_time / len(chunks) if chunks else 0
+    payload = {
+        "documents": TEST_DOCUMENT,
+        "questions": TEST_QUESTIONS
     }
-
-def test_full_pipeline_performance(text: str, embedder: TextEmbedder, entity_extractor: EntityExtractor) -> dict:
-    """Test full pipeline performance."""
-    logger.info("🧪 Testing full pipeline performance...")
     
+    print("🚀 Starting Performance Test")
+    print("=" * 50)
+    print(f"📄 Document: {TEST_DOCUMENT[:50]}...")
+    print(f"❓ Questions: {len(TEST_QUESTIONS)}")
+    print(f"⏰ Start Time: {datetime.now().strftime('%H:%M:%S')}")
+    print("-" * 50)
+    
+    # Start timing
     start_time = time.time()
     
-    # Step 1: Chunk and embed
-    chunks = embedder.chunk_and_embed(text)
-    chunk_embed_time = time.time() - start_time
-    
-    # Step 2: Entity extraction
-    entity_start = time.time()
-    entities = entity_extractor.extract_entities_batch(chunks)
-    entity_time = time.time() - entity_start
-    
-    total_time = time.time() - start_time
-    
-    return {
-        "total_time": total_time,
-        "chunk_embed_time": chunk_embed_time,
-        "entity_time": entity_time,
-        "num_chunks": len(chunks),
-        "num_entities": sum(len(v) for v in entities.get("entities", {}).values())
-    }
+    try:
+        # Make API request
+        print("📡 Making API request...")
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json=payload,
+            timeout=300  # 5 minutes timeout
+        )
+        
+        # Calculate timing
+        end_time = time.time()
+        total_time = end_time - start_time
+        
+        print(f"✅ Response received in {total_time:.2f} seconds")
+        print(f"📊 Status Code: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            answers = result.get('answers', [])
+            
+            print(f"📝 Generated {len(answers)} answers")
+            print("-" * 50)
+            
+            # Display answers with timing
+            for i, (question, answer) in enumerate(zip(TEST_QUESTIONS, answers)):
+                print(f"Q{i+1}: {question[:60]}...")
+                print(f"A{i+1}: {answer}")
+                print()
+            
+            # Performance summary
+            print("=" * 50)
+            print("📈 PERFORMANCE SUMMARY")
+            print("=" * 50)
+            print(f"⏱️  Total Time: {total_time:.2f} seconds")
+            print(f"📊 Average per question: {total_time/len(TEST_QUESTIONS):.2f} seconds")
+            print(f"🚀 Questions per minute: {60/(total_time/len(TEST_QUESTIONS)):.1f}")
+            
+            # Performance rating
+            if total_time < 30:
+                rating = "🟢 EXCELLENT"
+            elif total_time < 60:
+                rating = "🟡 GOOD"
+            elif total_time < 120:
+                rating = "🟠 ACCEPTABLE"
+            else:
+                rating = "🔴 SLOW"
+            
+            print(f"🏆 Performance Rating: {rating}")
+            
+        else:
+            print(f"❌ Error: {response.status_code}")
+            print(f"Response: {response.text}")
+            
+    except requests.exceptions.Timeout:
+        print("⏰ Request timed out (5 minutes)")
+    except requests.exceptions.RequestException as e:
+        print(f"❌ Request failed: {e}")
+    except Exception as e:
+        print(f"❌ Unexpected error: {e}")
 
-def compare_optimizations():
-    """Compare performance with different configurations."""
+def test_single_question():
+    """Test with a single question for quick timing."""
     
-    # Test with sample text (you can replace with actual document)
-    sample_text = """
-    This is a sample document for performance testing. It contains multiple paragraphs 
-    to simulate real-world document processing scenarios. The text should be long enough 
-    to create multiple chunks and test the embedding pipeline effectively.
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json",
+        "Accept": "application/json"
+    }
     
-    Performance optimization is crucial for real-time applications. We need to ensure 
-    that document processing happens quickly while maintaining accuracy. The chunking 
-    process should be efficient and the embedding calls should be optimized.
+    payload = {
+        "documents": TEST_DOCUMENT,
+        "questions": [TEST_QUESTIONS[0]]  # Just the first question
+    }
     
-    Machine learning models require careful tuning of parameters. Chunk size, overlap, 
-    and batch processing all affect performance. We need to find the right balance 
-    between speed and quality.
+    print("🧪 Single Question Test")
+    print("=" * 30)
+    print(f"❓ Question: {TEST_QUESTIONS[0][:50]}...")
     
-    API rate limiting is another important consideration. We need to respect the 
-    service provider's limits while maximizing throughput. Parallel processing and 
-    intelligent batching can help achieve this.
+    start_time = time.time()
     
-    The entity extraction process should also be optimized. Reducing the number of 
-    API calls while maintaining extraction quality is key. Single-pass processing 
-    with comprehensive prompts can help achieve this goal.
-    """ * 10  # Repeat to make it longer
-    
-    logger.info(f"📄 Test document length: {len(sample_text)} characters")
-    
-    # Test with optimized embedder
-    embedder = TextEmbedder()
-    entity_extractor = EntityExtractor()
-    
-    logger.info("🚀 Running performance tests...")
-    
-    # Test 1: Chunking performance
-    chunk_metrics = test_chunking_performance(sample_text, embedder)
-    
-    # Test 2: Get chunks for embedding test
-    chunks = embedder.chunk_text(sample_text)
-    
-    # Test 3: Embedding performance
-    embed_metrics = test_embedding_performance(chunks, embedder)
-    
-    # Test 4: Full pipeline
-    pipeline_metrics = test_full_pipeline_performance(sample_text, embedder, entity_extractor)
-    
-    # Print results
-    print("\n" + "="*60)
-    print("📊 PERFORMANCE TEST RESULTS")
-    print("="*60)
-    
-    print(f"\n📝 CHUNKING METRICS:")
-    print(f"   Time: {chunk_metrics['chunking_time']:.2f}s")
-    print(f"   Chunks: {chunk_metrics['num_chunks']}")
-    print(f"   Avg chunk size: {chunk_metrics['avg_chunk_size']:.0f} chars")
-    print(f"   Speed: {chunk_metrics['text_length']/chunk_metrics['chunking_time']:.0f} chars/sec")
-    
-    print(f"\n🧠 EMBEDDING METRICS:")
-    print(f"   Time: {embed_metrics['embedding_time']:.2f}s")
-    print(f"   Embedded: {embed_metrics['num_embedded']}")
-    print(f"   Avg time per chunk: {embed_metrics['avg_time_per_chunk']:.2f}s")
-    print(f"   Speed: {embed_metrics['num_embedded']/embed_metrics['embedding_time']:.1f} chunks/sec")
-    
-    print(f"\n🎯 FULL PIPELINE METRICS:")
-    print(f"   Total time: {pipeline_metrics['total_time']:.2f}s")
-    print(f"   Chunk+Embed: {pipeline_metrics['chunk_embed_time']:.2f}s")
-    print(f"   Entity extraction: {pipeline_metrics['entity_time']:.2f}s")
-    print(f"   Entities found: {pipeline_metrics['num_entities']}")
-    
-    # Performance recommendations
-    print(f"\n💡 PERFORMANCE INSIGHTS:")
-    if chunk_metrics['chunking_time'] > 1.0:
-        print("   ⚠️  Chunking is slow - consider larger chunk sizes")
-    else:
-        print("   ✅ Chunking performance is good")
-    
-    if embed_metrics['avg_time_per_chunk'] > 2.0:
-        print("   ⚠️  Embedding is slow - check API rate limits")
-    else:
-        print("   ✅ Embedding performance is good")
-    
-    if pipeline_metrics['total_time'] > 30.0:
-        print("   ⚠️  Total pipeline is slow - consider optimizations")
-    else:
-        print("   ✅ Pipeline performance is acceptable")
-    
-    print("\n" + "="*60)
+    try:
+        response = requests.post(
+            API_URL,
+            headers=headers,
+            json=payload,
+            timeout=300
+        )
+        
+        end_time = time.time()
+        total_time = end_time - start_time
+        
+        print(f"⏱️  Response Time: {total_time:.2f} seconds")
+        print(f"📊 Status: {response.status_code}")
+        
+        if response.status_code == 200:
+            result = response.json()
+            answer = result.get('answers', [])[0]
+            print(f"📝 Answer: {answer}")
+        else:
+            print(f"❌ Error: {response.text}")
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
 
 if __name__ == "__main__":
-    compare_optimizations() 
+    print("Choose test type:")
+    print("1. Full test (3 questions)")
+    print("2. Quick test (1 question)")
+    
+    choice = input("Enter choice (1 or 2): ").strip()
+    
+    if choice == "2":
+        test_single_question()
+    else:
+        test_api_performance() 

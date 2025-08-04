@@ -53,8 +53,8 @@ class LLMAnswerGenerator:
         llm_config = Config.LLM_ANSWER
         
         self.max_context_length = llm_config["max_context_length"]
-        self.max_output_tokens = llm_config["max_output_tokens"]
-        self.default_temperature = llm_config["temperature"]
+        self.max_output_tokens = 50  # Very short answers
+        self.default_temperature = 0.1
         self.max_retries = llm_config["max_retries"]
         self.retry_delay = llm_config["retry_delay"]
         
@@ -98,26 +98,24 @@ Content: {text[:400]}{'...' if len(text) > 400 else ''}
     
     def create_system_prompt(self) -> str:
         """Create system prompt for the LLM."""
-        return """You are a helpful AI assistant that provides accurate, concise answers based on provided context from documents. 
+        return """You are a document Q&A assistant. Give SHORT, DIRECT answers.
 
-Instructions:
-- Use ONLY the information provided in the context
-- Be extremely concise and to-the-point (1-2 sentences maximum)
-- If the context doesn't contain relevant information, say "Information not found in the document"
-- Focus on the most relevant facts only
-- Avoid unnecessary explanations or background information
-- Give direct, factual answers"""
+RULES:
+- Maximum 1-2 sentences
+- NO explanations or reasoning
+- NO "Looking at the sources" or similar phrases
+- Just state the fact directly
+- If not found: "Information not found in the document"
+
+Example: "The grace period is 30 days." (not "Looking at the sources, the grace period is 30 days...")"""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
-        return f"""Answer this question concisely using only the provided context:
+        return f"""Question: {question}
 
-Question: {question}
+Context: {context}
 
-Context:
-{context}
-
-Answer (be brief and direct):"""
+Answer (1-2 sentences max, no explanations):"""
     
     def generate_answer(self, question: str, search_results: List[Dict[str, Any]]) -> str:
         """Generate answer using OpenRouter API."""

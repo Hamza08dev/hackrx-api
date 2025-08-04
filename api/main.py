@@ -292,10 +292,11 @@ async def hackrx_run(
         
         # Validate API key (you can customize this)
         api_key = credentials.credentials
-        if not api_key:
+        expected_api_key = os.getenv("HACKRX_API_KEY", "hackrx-api-key-123")
+        if not api_key or api_key != expected_api_key:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="API key required"
+                detail="Invalid API key"
             )
         
         logger.info(f"🚀 Processing request: {len(request.questions)} questions")
@@ -315,7 +316,7 @@ async def hackrx_run(
         # Calculate processing time
         processing_time = time.time() - start_time
         
-        logger.info(f"✅ Request completed in {processing_time:.2f}s")
+        logger.info(f"✅ Request completed in {processing_time:.2f}s - API Keys Updated")
         
         return HackRxResponse(answers=answers)
     
