@@ -332,7 +332,21 @@ async def hackrx_run(
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+    try:
+        # Basic health check - don't initialize components
+        return {
+            "status": "healthy", 
+            "timestamp": datetime.now().isoformat(),
+            "version": "1.0.0",
+            "service": "HackRx API"
+        }
+    except Exception as e:
+        logger.error(f"Health check failed: {e}")
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }
 
 @app.get("/")
 async def root():
