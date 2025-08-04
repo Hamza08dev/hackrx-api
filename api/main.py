@@ -277,7 +277,7 @@ def answer_questions(components: Dict, questions: List[str]) -> List[str]:
             detail=f"Question answering failed: {str(e)}"
         )
 
-@app.post("/hackrx/run", response_model=HackRxResponse)
+@app.post("/api/v1/hackrx/run", response_model=HackRxResponse)
 async def hackrx_run(
     request: HackRxRequest,
     credentials: HTTPAuthorizationCredentials = Depends(security)
@@ -339,12 +339,12 @@ async def root():
     return {
         "message": "HackRx API is running",
         "endpoints": {
-            "main": "/hackrx/run",
+            "main": "/api/v1/hackrx/run",
             "health": "/health"
         }
     }
 
-@app.options("/hackrx/run")
+@app.options("/api/v1/hackrx/run")
 async def options_hackrx_run():
     """Handle OPTIONS requests for CORS preflight."""
     return {"message": "OK"}
