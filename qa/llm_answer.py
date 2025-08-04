@@ -110,7 +110,7 @@ RULES:
 Examples:
 - "The grace period for premium payment is thirty days."
 - "There is a waiting period of thirty-six months for pre-existing diseases."
-- "Yes, the policy covers maternity expenses with a 24-month waiting period.""""
+- "Yes, the policy covers maternity expenses with a 24-month waiting period."""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
