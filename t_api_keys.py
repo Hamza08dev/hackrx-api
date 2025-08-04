@@ -48,3 +48,10 @@
         A search pattern may begin with one or more of:
         ^N or !  Search for NON-matching lines.
         ^E or *  Search multiple files (pass thru END OF FILE).
+        ^F or @  Start search at FIRST file (for /) or last file (for ?).
+        ^K       Highlight matches, but don't move (KEEP position).
+        ^R       Don't use REGULAR EXPRESSIONS.
+        ^S _n     Search for match in _n-th parenthesized subpattern.
+        ^W       WRAP search if no match found.
+ ---------------------------------------------------------------------------
+
