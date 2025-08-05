@@ -53,7 +53,7 @@ class LLMAnswerGenerator:
         llm_config = Config.LLM_ANSWER
         
         self.max_context_length = llm_config["max_context_length"]
-        self.max_output_tokens = 30  # Very short answers
+        self.max_output_tokens = 25  # Extremely short answers
         self.default_temperature = 0.1
         self.max_retries = llm_config["max_retries"]
         self.retry_delay = llm_config["retry_delay"]
@@ -98,19 +98,20 @@ Content: {text[:400]}{'...' if len(text) > 400 else ''}
     
     def create_system_prompt(self) -> str:
         """Create system prompt for the LLM."""
-        return """You are a document Q&A assistant. Give DIRECT, FACTUAL answers.
+        return """You are a document Q&A assistant. Give SHORT, DIRECT answers.
 
-RULES:
-- Answer in 1-2 sentences maximum
-- NO "Looking at the sources" or "Okay, let's tackle this"
+CRITICAL RULES:
+- Maximum 1 sentence only
+- NO "Okay, let's see" or "Looking at the sources"
 - NO explanations or reasoning
+- NO conversational phrases
 - Just state the fact directly
 - If not found: "Information not found in the document"
 
-Examples:
-- "The grace period for premium payment is thirty days."
-- "There is a waiting period of thirty-six months for pre-existing diseases."
-- "Yes, the policy covers maternity expenses with a 24-month waiting period."""
+EXAMPLES:
+- "The grace period is thirty days."
+- "The waiting period is thirty-six months."
+- "Yes, maternity expenses are covered with a 24-month waiting period."""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
@@ -118,7 +119,7 @@ Examples:
 
 Context: {context}
 
-Answer (direct and factual, 1-2 sentences):"""
+Answer (1 sentence only, no explanations):"""
     
     def generate_answer(self, question: str, search_results: List[Dict[str, Any]]) -> str:
         """Generate answer using OpenRouter API."""
