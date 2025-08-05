@@ -372,7 +372,16 @@ async def root():
 @app.options("/api/v1/hackrx/run")
 async def options_hackrx_run():
     """Handle OPTIONS requests for CORS preflight."""
-    return {"message": "OK"}
+    from fastapi.responses import Response
+    return Response(
+        content="",
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "POST, OPTIONS",
+            "Access-Control-Allow-Headers": "Content-Type, Authorization",
+            "Access-Control-Max-Age": "86400"
+        }
+    )
 if __name__ == "__main__":
     # Run with uvicorn
     port = int(os.getenv("PORT", 8000))
