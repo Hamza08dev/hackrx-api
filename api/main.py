@@ -59,7 +59,7 @@ app.add_middleware(
     allow_headers=["*"],  # Allows all headers
 )
 # Security
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 # Pydantic models
 class HackRxRequest(BaseModel):
@@ -81,6 +81,10 @@ def get_document_hash(document_url: str) -> str:
 
 def get_cached_document(document_url: str) -> Dict[str, Any]:
     """Get cached document if available."""
+    # Check if cache is disabled via environment variable
+    if os.getenv("DISABLE_CACHE", "false").lower() == "true":
+        return None
+    
     doc_hash = get_document_hash(document_url)
     if doc_hash in document_cache:
         cached_data = document_cache[doc_hash]
@@ -210,11 +214,12 @@ def process_document(components: Dict, document_url: str) -> str:
         if not success:
             raise ValueError("Failed to store document")
         
-        # Cache the result
-        cache_document(document_url, {
-            'document_id': doc_id,
-            'text_length': len(text)
-        })
+        # Cache the result (if not disabled)
+        if os.getenv("DISABLE_CACHE", "false").lower() != "true":
+            cache_document(document_url, {
+                'document_id': doc_id,
+                'text_length': len(text)
+            })
         
         # Cleanup temp file
         if os.path.exists(temp_path):
@@ -290,10 +295,14 @@ async def hackrx_run(
     try:
         start_time = time.time()
         
-        # Validate API key (you can customize this)
-        api_key = credentials.credentials
+        # Validate API key (optional for hackathon testing)
+        api_key = credentials.credentials if credentials else None
         expected_api_key = os.getenv("HACKRX_API_KEY", "hackrx-api-key-123")
-        if not api_key or api_key != expected_api_key:
+        
+        # For hackathon testing, allow requests without API key
+        if not api_key:
+            logger.warning("⚠️ No API key provided - allowing request for hackathon testing")
+        elif api_key != expected_api_key:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="Invalid API key"
@@ -304,8 +313,9 @@ async def hackrx_run(
         # Get components
         components = get_components()
         
-        # Clear previous data
+        # Clear previous data and cache
         components["vector_store"].clear_storage()
+        document_cache.clear()  # Clear document cache
         
         # Process document
         doc_id = process_document(components, request.documents)
