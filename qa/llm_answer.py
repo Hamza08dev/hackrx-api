@@ -103,15 +103,18 @@ Content: {text[:400]}{'...' if len(text) > 400 else ''}
 CRITICAL RULES:
 - Maximum 1 sentence only
 - NO "Okay, let's see" or "Looking at the sources"
+- NO "The user is asking about" or "The question is about"
 - NO explanations or reasoning
 - NO conversational phrases
+- NO meta-commentary about the question
 - Just state the fact directly
 - If not found: "Information not found in the document"
 
 EXAMPLES:
 - "The grace period is thirty days."
 - "The waiting period is thirty-six months."
-- "Yes, maternity expenses are covered with a 24-month waiting period."""
+- "Yes, maternity expenses are covered with a 24-month waiting period."
+- "The waiting period for pre-existing diseases is thirty-six months.""""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
@@ -273,7 +276,7 @@ Answer (1 sentence only, no explanations):"""
                 # Temporarily modify max tokens based on style
                 original_max_tokens = self.max_output_tokens
                 if style == "concise":
-                    self.max_output_tokens = 150
+                    self.max_output_tokens = 50  # Reduced from 150 to force shorter answers
                 elif style == "detailed":
                     self.max_output_tokens = 500
                 
