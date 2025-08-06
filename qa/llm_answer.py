@@ -276,7 +276,7 @@ Answer (1 sentence only, no explanations):"""
                 # Temporarily modify max tokens based on style
                 original_max_tokens = self.max_output_tokens
                 if style == "concise":
-                    self.max_output_tokens = 50  # Reduced from 150 to force shorter answers
+                    self.max_output_tokens = 30  # Further reduced to force very short answers
                 elif style == "detailed":
                     self.max_output_tokens = 500
                 
