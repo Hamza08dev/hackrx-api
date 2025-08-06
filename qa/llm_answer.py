@@ -104,6 +104,7 @@ CRITICAL RULES:
 - Maximum 1 sentence only
 - NO "Okay, let's see" or "Looking at the sources"
 - NO "The user is asking about" or "The question is about"
+- NO "Based on the document" or "According to the policy"
 - NO explanations or reasoning
 - NO conversational phrases
 - NO meta-commentary about the question
@@ -114,7 +115,7 @@ EXAMPLES:
 - "The grace period is thirty days."
 - "The waiting period is thirty-six months."
 - "Yes, maternity expenses are covered with a 24-month waiting period."
-- "The waiting period for pre-existing diseases is thirty-six months.""""
+- "The waiting period for pre-existing diseases is thirty-six months."""
     
     def create_user_prompt(self, question: str, context: str) -> str:
         """Create user prompt combining question and context."""
@@ -276,7 +277,7 @@ Answer (1 sentence only, no explanations):"""
                 # Temporarily modify max tokens based on style
                 original_max_tokens = self.max_output_tokens
                 if style == "concise":
-                    self.max_output_tokens = 30  # Further reduced to force very short answers
+                    self.max_output_tokens = 20  # Very short to prevent verbose responses
                 elif style == "detailed":
                     self.max_output_tokens = 500
                 
