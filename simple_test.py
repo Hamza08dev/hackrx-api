@@ -15,8 +15,7 @@ print("\n" + "="*50 + "\n")
 print("Testing main endpoint...")
 url = "https://hackrx-api-uc43.onrender.com/hackrx/run"
 headers = {
-    "Content-Type": "application/json",
-    "Authorization": "Bearer test_key_123"
+    "Content-Type": "application/json"
 }
 data = {
     "documents": "https://hackrx.blob.core.windows.net/assets/policy.pdf?sv=2023-01-03&st=2025-07-04T09%3A11%3A24Z&se=2027-07-05T09%3A11%3A00Z&sr=b&sp=r&sig=N4a9OU0w0QXO6AOIBiu4bpl7AXvEZogeT%2FjUHNO7HzQ%3D",

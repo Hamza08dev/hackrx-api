@@ -58,7 +58,7 @@ app.add_middleware(
     allow_methods=["*"],  # Allows all methods
     allow_headers=["*"],  # Allows all headers
 )
-# Security
+# Security (completely optional for hackathon)
 security = HTTPBearer(auto_error=False)
 
 # Pydantic models
@@ -295,18 +295,13 @@ async def hackrx_run(
     try:
         start_time = time.time()
         
-        # Validate API key (optional for hackathon testing)
+        # Authentication is optional for hackathon testing
         api_key = credentials.credentials if credentials else None
-        expected_api_key = os.getenv("HACKRX_API_KEY", "hackrx-api-key-123")
         
-        # For hackathon testing, allow requests without API key
-        if not api_key:
-            logger.warning("⚠️ No API key provided - allowing request for hackathon testing")
-        elif api_key != expected_api_key:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid API key"
-            )
+        if api_key:
+            logger.info("🔑 API key provided (optional)")
+        else:
+            logger.info("✅ No API key required - proceeding with request")
         
         logger.info(f"🚀 Processing request: {len(request.questions)} questions")
         

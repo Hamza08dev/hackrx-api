@@ -124,7 +124,6 @@ Test with curl:
 ```bash
 curl -X POST "https://your-deployed-url.com/hackrx/run" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer test_key_123" \
   -d '{
     "documents": "https://hackrx.blob.core.windows.net/assets/policy.pdf?sv=2023-01-03&st=2025-07-04T09%3A11%3A24Z&se=2027-07-05T09%3A11%3A00Z&sr=b&sp=r&sig=N4a9OU0w0QXO6AOIBiu4bpl7AXvEZogeT%2FjUHNO7HzQ%3D",
     "questions": ["What is the grace period for premium payment?"]
@@ -137,7 +136,7 @@ Before submitting to the hackathon:
 
 - [ ] API is deployed and accessible via HTTPS
 - [ ] `/hackrx/run` endpoint responds correctly
-- [ ] Bearer token authentication works
+- [ ] API accepts requests without authentication
 - [ ] Response time is under 30 seconds
 - [ ] Returns JSON format with `answers` array
 - [ ] Tested with sample hackathon data

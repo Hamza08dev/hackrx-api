@@ -16,8 +16,7 @@ def test_api():
     # API details
     url = "https://hackrx-api-uc43.onrender.com/hackrx/run"
     headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer test_key_123"
+        "Content-Type": "application/json"
     }
     
     # Test data

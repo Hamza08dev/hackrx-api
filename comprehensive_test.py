@@ -23,8 +23,7 @@ def test_main_endpoint():
     
     url = "https://hackrx-api-uc43.onrender.com/hackrx/run"
     headers = {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer test_key_123"
+        "Content-Type": "application/json"
     }
     
     # Simple test with one question
@@ -88,7 +87,7 @@ def test_error_handling():
     # Test 2: Invalid JSON
     print("2. Testing invalid JSON...")
     try:
-        headers = {"Authorization": "Bearer test_key_123"}
+        headers = {"Content-Type": "application/json"}
         response = requests.post(url, headers=headers, data="invalid json")
         if response.status_code == 422:
             print("✅ Correctly rejected invalid JSON")
